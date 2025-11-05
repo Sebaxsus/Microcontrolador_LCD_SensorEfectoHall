@@ -1,4 +1,4 @@
-<style>
+<style type="text/css">
     h1 {
         text-align: center;
         margin-bottom: 1rem;
@@ -108,5 +108,51 @@ Esto permite que la salida sea mas precisa y suave, util para generar señales m
 filtrado = alpha * lectura + (1 - alpha) * filtrado;
 ```
 
-Es un **filtro paso bajo exponencial** (*Exponencial Moving Average*).
-Su función es **suavizar** la señal del sensor para eliminar ruido, sin hacer lenta la operación.
+Es un **filtro paso bajo exponencial** (*Exponencial Moving Average o EMA*).
+
+Su función es **suavizar la señal de salida del sensor (lectura)** para eliminar/reducir el ruido eléctrico o magnético, sin hacer demasiado lenta la operación.
+
+| Símbolo | Significado |
+| :---: | :---: |
+| `lectura` | Valor leído del sensor |
+| `filtrado` | Valor anterior suavizado |
+| `alpha` | Coeficiente entre `0` y `1` Que indica cuanto se confía en la lectura nueva. (Que no sea una lectura errónea por el ruido electromagnético en este caso) |
+
+La formula seria:
+
+$y[n] = a \cdot x[n] + (1 - a) \cdot y[n - 1]$
+
+Donde:
+- `x[n]` --> lectura actual del sensor.
+- `y[n]` --> salida actual (filtrada).
+- `y[n-1]` --> valor filtrado anterior.
+
+[Info Sobre Formulas en MD AKA LaTex](https://en.wikibooks.org/wiki/LaTeX/Mathematics)
+
+Por ende si Asignamos a alpha los siguientes Valores:
+
+- `alpha = 1.0` --> **Sin Filtro**, responde instantáneamente, pero la salida es ruidosa. (La salida/Mapeo de la salida del sensor se vuelve ruidosa).
+- `alpha = 0.5` --> **Filtro medio**, Es decir la lectura saldrá con la mitad de la lectura actual y la otra mitad con el valor filtrado anterior.
+- `alpha = 0.1` --> **Totalmente Filtrado**, El valor de salida/Mapeado se vuelve mas estable, pero el tiempo de respuesta sera ligeramente mayor (Mas lento), Ya que debe hacer las operaciones.
+
+> En este proyecto, se recomienda un valor entre **0.05** y **0.2** dependiendo de la sensibilidad del sensor Hall y el nivel de ruido.
+
+```mermaid
+%%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#000000', 'lineColor': '#00BFFF', 'textColor': '#FFFFFF' }}}%%
+graph LR
+A0["Entrada del sensor (ruidosa)"] -->|Cambio brusco| B0["Lectura = 1023"]
+A0 -->|Valor previo| A1["Lectura = 100"]
+
+subgraph "Respuesta del filtro"
+    direction TB
+    X1["α = 1.0 → Sin filtro"] --> X1_1["Salida: 100 → 1023 de inmediato (ruidosa)"]
+    X2["α = 0.5 → Filtro medio"] --> X2_1["Salida: 100 → 562 → 800 → 950 (suaviza un poco)"]
+    X3["α = 0.1 → Filtro fuerte"] --> X3_1["Salida: 100 → 190 → 270 → 340 → ... (muy estable)"]
+end
+
+B0 --> X1
+B0 --> X2
+B0 --> X3
+```
+
+> --- [Sebaxsus 2025](https://github.com/Sebaxsus/)
